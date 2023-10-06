@@ -20,6 +20,7 @@ func (a *Server) loadRoutes() {
 
 	router.Route("/users", a.loadUserRoutes)
 	router.Route("/rooms", a.loadRoomRoutes)
+	router.Route("/movies", a.loadMovieRoutes)
 
 	a.router = router
 }
@@ -47,4 +48,14 @@ func (a *Server) loadRoomRoutes(router chi.Router) {
 
 	router.Post("/", roomHandler.CreateRoom)
 	router.Post("/adduser", roomHandler.AddUserToRoom)
+}
+
+func (a *Server) loadMovieRoutes(router chi.Router) {
+	movieHandler := &handlers.MovieHandler{
+		Data: data.MovieData{
+			Env: a.config,
+		},
+	}
+
+	router.Get("/{movie_id}", movieHandler.GetMovie)
 }
