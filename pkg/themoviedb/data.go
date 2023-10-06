@@ -13,7 +13,7 @@ type Movie struct {
 }
 
 func (m *MovieDBOptions) GetMovie(movieID uint) (*Movie, error) {
-	byteMovie, err := m.Get(fmt.Sprintf("movie/%v", movieID))
+	byteMovie, err := m.get(fmt.Sprintf("movie/%v", movieID))
 	if err != nil {
 		return nil, fmt.Errorf("Failed to get movie: %w", err)
 	}

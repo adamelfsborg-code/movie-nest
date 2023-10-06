@@ -59,7 +59,7 @@ func (m *MovieDBOptions) setHeaders(request *http.Request) error {
 	return nil
 }
 
-func (m *MovieDBOptions) Get(path string) ([]byte, error) {
+func (m *MovieDBOptions) get(path string) ([]byte, error) {
 	client := &http.Client{
 		Transport: &LoggingTransport{
 			Transport: http.DefaultTransport,
