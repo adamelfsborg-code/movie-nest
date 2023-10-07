@@ -21,6 +21,7 @@ func (a *Server) loadRoutes() {
 	router.Route("/users", a.loadUserRoutes)
 	router.Route("/rooms", a.loadRoomRoutes)
 	router.Route("/movies", a.loadMovieRoutes)
+	router.Route("/shelves", a.loadShelfRoutes)
 
 	a.router = router
 }
@@ -58,4 +59,14 @@ func (a *Server) loadMovieRoutes(router chi.Router) {
 	}
 
 	router.Get("/{movie_id}", movieHandler.GetMovie)
+
+	router.Post("/", movieHandler.CreateMovie)
+}
+
+func (a *Server) loadShelfRoutes(router chi.Router) {
+	shelfHandler := &handlers.ShelfHandler{
+		Data: data.ShelfData{},
+	}
+
+	router.Post("/", shelfHandler.CreateShelf)
 }
