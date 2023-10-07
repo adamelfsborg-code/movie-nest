@@ -45,10 +45,10 @@ func (a *Server) loadRoomRoutes(router chi.Router) {
 	router.Get("/{room_id}", roomHandler.GetRoomByID)
 	router.Get("/withusers", roomHandler.ListRoomsWithUsers)
 	router.Get("/withusers/{room_id}", roomHandler.GetRoomWithUsersByID)
-	router.Get("/withusers/{user_id}", roomHandler.GetUserRoomsByID)
+	router.Get("/users/{user_id}", roomHandler.GetUserRoomsByID)
 
 	router.Post("/", roomHandler.CreateRoom)
-	router.Post("/adduser", roomHandler.AddUserToRoom)
+	router.Post("/users", roomHandler.AddUserToRoom)
 }
 
 func (a *Server) loadMovieRoutes(router chi.Router) {
