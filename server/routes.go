@@ -19,21 +19,32 @@ func (a *Server) loadRoutes() {
 	})
 
 	router.Route("/users", a.loadUserRoutes)
-	router.Route("/rooms", a.loadRoomRoutes)
-	router.Route("/movies", a.loadMovieRoutes)
-	router.Route("/shelves", a.loadShelfRoutes)
+
+	router.Group(func(r chi.Router) {
+		r.Use(CustomAuthMiddleware())
+		r.Route("/rooms", a.loadRoomRoutes)
+		r.Route("/movies", a.loadMovieRoutes)
+		r.Route("/shelves", a.loadShelfRoutes)
+	})
 
 	a.router = router
 }
 
 func (a *Server) loadUserRoutes(router chi.Router) {
 	userHandler := &handlers.UserHandler{
-		Data: data.UserData{},
+		Data: data.UserData{
+			Env: a.config,
+		},
 	}
 
-	router.Get("/", userHandler.SelectUsers)
-	router.Get("/{user_id}", userHandler.SelectUsers)
-	router.Post("/", userHandler.CreateUser)
+	router.Group(func(r chi.Router) {
+		r.Use(CustomAuthMiddleware())
+		r.Get("/", userHandler.SelectUsers)
+		r.Get("/{user_id}", userHandler.SelectUsers)
+	})
+
+	router.Post("/register", userHandler.Register)
+	router.Post("/login", userHandler.Login)
 }
 
 func (a *Server) loadRoomRoutes(router chi.Router) {
