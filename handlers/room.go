@@ -144,7 +144,7 @@ func (u *RoomHandler) GetRoomWithUsersByID(w http.ResponseWriter, r *http.Reques
 }
 
 func (u *RoomHandler) GetUserRoomsByID(w http.ResponseWriter, r *http.Request) {
-	idParam := chi.URLParam(r, "user_id")
+	idParam := r.Header.Get("X-UserID")
 
 	userID, err := uuid.Parse(idParam)
 	if err != nil {

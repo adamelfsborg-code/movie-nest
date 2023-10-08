@@ -32,7 +32,14 @@ func Authenticate(next http.Handler) http.Handler {
 			return
 		}
 
-		fmt.Println(claims)
+		userID, ok := claims["sub"].(string)
+		if !ok {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		fmt.Println(userID)
+		r.Header.Set("X-UserID", userID)
 
 		next.ServeHTTP(w, r)
 	})
