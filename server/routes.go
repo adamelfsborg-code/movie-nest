@@ -7,10 +7,18 @@ import (
 	"github.com/adamelfsborg-code/movie-nest/handlers"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
 )
 
 func (a *Server) loadRoutes() {
 	router := chi.NewRouter()
+
+	router.Use(cors.Handler(cors.Options{
+		AllowedOrigins:   []string{"http://localhost:5173"}, // Replace with your allowed origins
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
+		AllowCredentials: true,
+	}))
 
 	router.Use(middleware.Logger)
 
@@ -34,13 +42,16 @@ func (a *Server) loadUserRoutes(router chi.Router) {
 	userHandler := &handlers.UserHandler{
 		Data: data.UserData{
 			Env: a.config,
+			DB:  a.datbase,
 		},
 	}
 
 	router.Group(func(r chi.Router) {
 		r.Use(CustomAuthMiddleware())
 		r.Get("/", userHandler.SelectUsers)
-		r.Get("/{user_id}", userHandler.SelectUsers)
+		r.Get("/user", userHandler.GetUserInfoByID)
+		r.Get("/access", userHandler.HandleUserAccess)
+		r.Get("/rooms/{room_id}", userHandler.GetUsersInRoom)
 	})
 
 	router.Post("/register", userHandler.Register)
@@ -49,11 +60,15 @@ func (a *Server) loadUserRoutes(router chi.Router) {
 
 func (a *Server) loadRoomRoutes(router chi.Router) {
 	roomHandler := &handlers.RoomHandler{
-		Data: data.RoomData{},
+		Data: data.RoomData{
+			DB: a.datbase,
+		},
 	}
 
 	router.Get("/", roomHandler.SelectRooms)
 	router.Get("/{room_id}", roomHandler.GetRoomByID)
+	router.Get("/{room_id}/info", roomHandler.GetRoomInfoByID)
+	router.Get("/{room_id}/available-users", roomHandler.GetAvailableUsers)
 	router.Get("/withusers", roomHandler.ListRoomsWithUsers)
 	router.Get("/withusers/{room_id}", roomHandler.GetRoomWithUsersByID)
 	router.Get("/users", roomHandler.GetUserRoomsByID)
@@ -66,6 +81,7 @@ func (a *Server) loadMovieRoutes(router chi.Router) {
 	movieHandler := &handlers.MovieHandler{
 		Data: data.MovieData{
 			Env: a.config,
+			DB:  a.datbase,
 		},
 	}
 
@@ -76,8 +92,14 @@ func (a *Server) loadMovieRoutes(router chi.Router) {
 
 func (a *Server) loadShelfRoutes(router chi.Router) {
 	shelfHandler := &handlers.ShelfHandler{
-		Data: data.ShelfData{},
+		Data: data.ShelfData{
+			DB: a.datbase,
+		},
 	}
+
+	router.Get("/{shelf_id}/movies", shelfHandler.GetShelfMoviesByID)
+	router.Get("/rooms/{room_id}", shelfHandler.GetShelvesByRoomID)
+	router.Get("/{shelf_id}/info", shelfHandler.GetShelfInfoByID)
 
 	router.Post("/", shelfHandler.CreateShelf)
 }

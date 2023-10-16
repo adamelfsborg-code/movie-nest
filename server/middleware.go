@@ -1,7 +1,6 @@
 package server
 
 import (
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -38,7 +37,6 @@ func Authenticate(next http.Handler) http.Handler {
 			return
 		}
 
-		fmt.Println(userID)
 		r.Header.Set("X-UserID", userID)
 
 		next.ServeHTTP(w, r)

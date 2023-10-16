@@ -2,13 +2,14 @@ package data
 
 import (
 	"github.com/adamelfsborg-code/movie-nest/config"
-	"github.com/adamelfsborg-code/movie-nest/db"
 	"github.com/adamelfsborg-code/movie-nest/pkg/themoviedb"
+	"github.com/go-pg/pg/v10"
 	"github.com/google/uuid"
 )
 
 type MovieData struct {
 	Env config.Environments
+	DB  pg.DB
 }
 
 type Movie struct {
@@ -25,7 +26,7 @@ func NewMovie(movieID uint, shelfID uuid.UUID) *Movie {
 }
 
 func (m *MovieData) CreateMovie(movie Movie) error {
-	_, err := db.Store.Model(&movie).Insert()
+	_, err := m.DB.Model(&movie).Insert()
 	return err
 }
 
