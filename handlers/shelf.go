@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/adamelfsborg-code/movie-nest/data"
 	"github.com/go-chi/chi/v5"
@@ -114,6 +115,45 @@ func (s *ShelfHandler) GetShelfInfoByID(w http.ResponseWriter, r *http.Request) 
 	}
 
 	jsonBytes, err := json.Marshal(shelf)
+	if err != nil {
+		fmt.Println("Failed to decode json: ", err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Add("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(jsonBytes)
+}
+
+func (s *ShelfHandler) GetAvailableMovies(w http.ResponseWriter, r *http.Request) {
+	idParam := chi.URLParam(r, "shelf_id")
+
+	shelfID, err := uuid.Parse(idParam)
+	if err != nil {
+		fmt.Println("Failed to parse id: ", err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	searchTerm := r.URL.Query().Get("searchTerm")
+	excludeExistingParam := r.URL.Query().Get("excludeExisting")
+
+	excludeExisting, err := strconv.ParseBool(excludeExistingParam)
+	if err != nil {
+		fmt.Println("Failed to parse excludeExisting: ", err)
+		fmt.Println("Using excludeExisting as default: true ")
+		excludeExisting = true
+	}
+
+	availableMovies, err := s.Data.GetAvailableMovies(shelfID, searchTerm, excludeExisting)
+	if err != nil {
+		fmt.Println("Failed to search movies: ", err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	jsonBytes, err := json.Marshal(availableMovies)
 	if err != nil {
 		fmt.Println("Failed to decode json: ", err)
 		w.WriteHeader(http.StatusBadRequest)

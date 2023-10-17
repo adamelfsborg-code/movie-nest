@@ -25,7 +25,14 @@ type User struct {
 	Timestamp time.Time `json:"timestamp" db:"timestamp"`
 }
 
+type UserResp struct {
+	ID        uuid.UUID `json:"id" db:"id"`
+	Name      string    `json:"name" db:"name" validate:"max=20,min=3"`
+	Timestamp time.Time `json:"timestamp" db:"timestamp"`
+}
+
 func NewRegisterUser(name, password string) (*User, error) {
+	fmt.Println(password, name)
 	validate := validator.New()
 
 	user := &User{
@@ -61,6 +68,7 @@ func (u *UserData) List() []User {
 func (u *UserData) Login(name, password string) (string, error) {
 	user := u.getUserByName(name)
 
+	fmt.Println(password, user)
 	valid := shared.CheckPasswordHash(password, user.Password)
 	if valid == false {
 		return "", fmt.Errorf("User does not exists")
@@ -94,36 +102,22 @@ func (u *UserData) CheckUserExistsByID(userID uuid.UUID) bool {
 	return false
 }
 
-func (u *UserData) GetUsersInRoom(roomID uuid.UUID) []User {
+func (u *UserData) GetUsersInRoom(roomID uuid.UUID, userID uuid.UUID, excludeSelf bool) []User {
 	var users []User
-	u.DB.Model(&users).Join(fmt.Sprintf("JOIN room_users ru ON %q.id = ru.user_id", "user")).Where("ru.room_id = ?", &roomID).Select()
+
+	query := u.DB.Model(&users).Join(fmt.Sprintf("JOIN room_users ru ON %q.id = ru.user_id", "user")).Where("ru.room_id = ?", &roomID)
+
+	if excludeSelf {
+		query.Where("ru.user_id <> ?", &userID)
+	}
+
+	query.Select()
+
 	return users
 }
 
 func (u *UserData) getUserByName(name string) User {
 	var user User
-
-	// // List tables on the current search path.
-	// var tables []string
-	// _, err = u.DB.Query(&tables, `
-	// 		SELECT tablename
-	// 		FROM pg_catalog.pg_tables
-	// 		WHERE schemaname = ANY (current_schemas(false))
-	// 	`)
-	// if err != nil {
-	// 	fmt.Println("Error querying tables:", err)
-	// 	os.Exit(1)
-	// }
-
-	// fmt.Println("Tables on the current search path:")
-	// for _, tablename := range tables {
-	// 	fmt.Println(tablename)
-	// }
-
-	// err = u.DB.Ping(context.Background())
-	// if err != nil {
-	// 	fmt.Println("ERror ping to db", err)
-	// }
 
 	u.DB.Model(&user).Where("name = ?", name).Select()
 	return user

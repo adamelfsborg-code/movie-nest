@@ -67,3 +67,78 @@ func (m *MovieHandler) GetMovie(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write(jsonBytes)
 }
+
+func (m *MovieHandler) GetMovieDetails(w http.ResponseWriter, r *http.Request) {
+	idParam := chi.URLParam(r, "movie_id")
+
+	movieID, err := uuid.Parse(idParam)
+	if err != nil {
+		fmt.Println("Failed to parse id: ", err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	movie, err := m.Data.GetMovieDetails(movieID)
+	if err != nil {
+		fmt.Println("Failed to get movie: ", err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	jsonBytes, err := json.Marshal(movie)
+	if err != nil {
+		fmt.Println("Failed to decode json: ", err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Add("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(jsonBytes)
+}
+func (m *MovieHandler) RateMovie(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Rating float64 `json:"rating"`
+	}
+
+	err := json.NewDecoder(r.Body).Decode(&body)
+	if err != nil {
+		fmt.Println("Failed to decode json: ", err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	idParam := chi.URLParam(r, "movie_id")
+
+	movieID, err := uuid.Parse(idParam)
+	if err != nil {
+		fmt.Println("Failed to parse id: ", err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	idParam = r.Header.Get("X-UserID")
+
+	userID, err := uuid.Parse(idParam)
+	if err != nil {
+		fmt.Println("Failed to parse id: ", err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	movieRating := &data.MovieRating{
+		MovieID: movieID,
+		UserID:  userID,
+		Rating:  body.Rating,
+	}
+
+	err = m.Data.RateMovie(*movieRating)
+	if err != nil {
+		fmt.Println("Failed to search movies: ", err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Add("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+}

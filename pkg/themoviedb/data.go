@@ -12,6 +12,11 @@ type Movie struct {
 	ReleaseDate string `json:"release_date"`
 }
 
+type SearchMovieResp struct {
+	Page   uint    `json:"page"`
+	Movies []Movie `json:"results"`
+}
+
 func (m *MovieDBOptions) GetMovie(movieID uint) (*Movie, error) {
 	byteMovie, err := m.get(fmt.Sprintf("movie/%v", movieID))
 	if err != nil {
@@ -28,4 +33,16 @@ func (m *MovieDBOptions) GetMovie(movieID uint) (*Movie, error) {
 		ReleaseDate: resp.ReleaseDate,
 	}
 	return movie, nil
+}
+
+func (m *MovieDBOptions) SearchMovies(searchTerm string) ([]Movie, error) {
+	byteMovies, err := m.get(fmt.Sprintf("search/movie?query=%v", searchTerm))
+	if err != nil {
+		return nil, fmt.Errorf("Failed to get movie: %w", err)
+	}
+
+	resp := SearchMovieResp{}
+	json.Unmarshal(byteMovies, &resp)
+
+	return resp.Movies, nil
 }

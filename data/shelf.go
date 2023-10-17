@@ -3,12 +3,15 @@ package data
 import (
 	"time"
 
+	"github.com/adamelfsborg-code/movie-nest/config"
+	"github.com/adamelfsborg-code/movie-nest/pkg/themoviedb"
 	"github.com/go-pg/pg/v10"
 	"github.com/google/uuid"
 )
 
 type ShelfData struct {
-	DB pg.DB
+	DB  pg.DB
+	Env config.Environments
 }
 
 type Shelf struct {
@@ -55,4 +58,41 @@ func (s *ShelfData) GetShelfInfoByID(shelfID uuid.UUID) Shelf {
 	var shelf Shelf
 	s.DB.Model(&shelf).Where("id = ?", &shelfID).Select()
 	return shelf
+}
+
+func (s *ShelfData) GetAvailableMovies(shelfID uuid.UUID, searchTerm string, excludeExisting bool) ([]themoviedb.Movie, error) {
+	movieDB := themoviedb.NewMovieDBOptions(s.Env.MovieDBAuthToken, "")
+
+	movies, err := movieDB.SearchMovies(searchTerm)
+	if err != nil {
+		return nil, err
+	}
+
+	if excludeExisting {
+		// Get existing movies for the specified shelf.
+		var existingMovies []Movie
+		if err := s.DB.Model(&existingMovies).Where("shelf_id = ?", shelfID).Select(); err != nil {
+			return nil, err
+		}
+
+		// Create a map to efficiently check if a movie exists in existingMovies.
+		existingMovieMap := make(map[uint]struct{})
+		for _, movie := range existingMovies {
+			existingMovieMap[movie.MovieID] = struct{}{}
+		}
+
+		// Filter out movies that already exist in the specified shelf.
+		var availableMovies []themoviedb.Movie
+		for _, movie := range movies {
+			if _, exists := existingMovieMap[movie.ID]; !exists {
+				availableMovies = append(availableMovies, movie)
+			}
+		}
+
+		return availableMovies, nil
+	}
+
+	// get exluded movies, movies that does not exists inside existingMovies
+
+	return movies, nil
 }

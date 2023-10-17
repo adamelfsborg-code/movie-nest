@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/adamelfsborg-code/movie-nest/data"
 	"github.com/go-chi/chi/v5"
@@ -42,7 +43,7 @@ func (u *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := data.NewRegisterUser(body.Name, body.Name)
+	user, err := data.NewRegisterUser(body.Name, body.Password)
 	if err != nil {
 		fmt.Println("Failed to create user: ", err)
 		w.WriteHeader(http.StatusBadRequest)
@@ -71,7 +72,7 @@ func (u *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := u.Data.Login(body.Name, body.Name)
+	token, err := u.Data.Login(body.Name, body.Password)
 	if err != nil {
 		fmt.Println("Failed to login user: ", err)
 		w.WriteHeader(http.StatusBadRequest)
@@ -148,7 +149,25 @@ func (u *UserHandler) GetUsersInRoom(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	users := u.Data.GetUsersInRoom(roomID)
+	idParam = r.Header.Get("X-UserID")
+
+	userID, err := uuid.Parse(idParam)
+	if err != nil {
+		fmt.Println("Failed to parse id: ", err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	excludeSelfParm := r.URL.Query().Get("excludeSelf")
+
+	excludeSelf, err := strconv.ParseBool(excludeSelfParm)
+	if err != nil {
+		fmt.Println("Failed to parse excludeSelf: ", err)
+		fmt.Println("Using excludeSelf as default: true ")
+		excludeSelf = true
+	}
+
+	users := u.Data.GetUsersInRoom(roomID, userID, excludeSelf)
 
 	jsonBytes, err := json.Marshal(users)
 	if err != nil {

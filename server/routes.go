@@ -86,20 +86,24 @@ func (a *Server) loadMovieRoutes(router chi.Router) {
 	}
 
 	router.Get("/{movie_id}", movieHandler.GetMovie)
+	router.Get("/{movie_id}/details", movieHandler.GetMovieDetails)
 
 	router.Post("/", movieHandler.CreateMovie)
+	router.Post("/{movie_id}/ratings", movieHandler.RateMovie)
 }
 
 func (a *Server) loadShelfRoutes(router chi.Router) {
 	shelfHandler := &handlers.ShelfHandler{
 		Data: data.ShelfData{
-			DB: a.datbase,
+			Env: a.config,
+			DB:  a.datbase,
 		},
 	}
 
 	router.Get("/{shelf_id}/movies", shelfHandler.GetShelfMoviesByID)
 	router.Get("/rooms/{room_id}", shelfHandler.GetShelvesByRoomID)
 	router.Get("/{shelf_id}/info", shelfHandler.GetShelfInfoByID)
+	router.Get("/{shelf_id}/available-movies", shelfHandler.GetAvailableMovies)
 
 	router.Post("/", shelfHandler.CreateShelf)
 }
