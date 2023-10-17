@@ -16,6 +16,7 @@ type Environments struct {
 	MovieDBApiKey    string
 	MovieDBAuthToken string
 	SecretKey        []byte
+	NatsAddr         string
 }
 
 var Env *Environments
@@ -61,9 +62,15 @@ func New() (*Environments, error) {
 	if exists == false {
 		return nil, fmt.Errorf("MOVIEDB_AUTH_TOKEN not found")
 	}
+
 	secretKey, exists := os.LookupEnv("SECRET_KEY")
 	if exists == false {
 		return nil, fmt.Errorf("SECRET_KEY not found")
+	}
+
+	natsAddr, exists := os.LookupEnv("NATS_ADDR")
+	if exists == false {
+		return nil, fmt.Errorf("NATS_ADDR not found")
 	}
 
 	env := &Environments{
@@ -75,6 +82,7 @@ func New() (*Environments, error) {
 		MovieDBApiKey:    movieDBApiKey,
 		MovieDBAuthToken: movieDBAuthToken,
 		SecretKey:        []byte(secretKey),
+		NatsAddr:         natsAddr,
 	}
 
 	Env = env

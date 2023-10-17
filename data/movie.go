@@ -1,17 +1,20 @@
 package data
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/adamelfsborg-code/movie-nest/config"
 	"github.com/adamelfsborg-code/movie-nest/pkg/themoviedb"
 	"github.com/go-pg/pg/v10"
 	"github.com/google/uuid"
+	"github.com/nats-io/nats.go"
 )
 
 type MovieData struct {
-	Env config.Environments
-	DB  pg.DB
+	Env  config.Environments
+	DB   pg.DB
+	Nats *nats.Conn
 }
 
 type Movie struct {
@@ -55,6 +58,8 @@ func NewMovie(movieID uint, shelfID uuid.UUID) *Movie {
 
 func (m *MovieData) CreateMovie(movie Movie) error {
 	_, err := m.DB.Model(&movie).Insert()
+	data, _ := json.Marshal(movie)
+	m.Nats.Publish("movies.create", []byte(data))
 	return err
 }
 
@@ -120,5 +125,7 @@ func (m *MovieData) GetMovieDetails(movieID uuid.UUID) (*MovieDetails, error) {
 
 func (m *MovieData) RateMovie(rating MovieRating) error {
 	_, err := m.DB.Model(&rating).Insert()
+	data, _ := json.Marshal(rating)
+	m.Nats.Publish("movies.rate", []byte(data))
 	return err
 }

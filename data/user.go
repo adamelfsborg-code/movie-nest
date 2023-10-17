@@ -9,13 +9,15 @@ import (
 	"github.com/go-pg/pg/v10"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
+	"github.com/nats-io/nats.go"
 
 	"github.com/golang-jwt/jwt/v5"
 )
 
 type UserData struct {
-	Env config.Environments
-	DB  pg.DB
+	Env  config.Environments
+	DB   pg.DB
+	Nats *nats.Conn
 }
 
 type User struct {

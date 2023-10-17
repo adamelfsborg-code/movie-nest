@@ -1,15 +1,18 @@
 package data
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 
 	"github.com/go-pg/pg/v10"
 	"github.com/google/uuid"
+	"github.com/nats-io/nats.go"
 )
 
 type RoomData struct {
-	DB pg.DB
+	DB   pg.DB
+	Nats *nats.Conn
 }
 
 type Room struct {
@@ -56,6 +59,8 @@ func NewRoomUser(roomID, userID uuid.UUID) *RoomUser {
 
 func (r *RoomData) CreateRoom(room Room) error {
 	_, err := r.DB.Model(&room).Insert()
+	data, _ := json.Marshal(room)
+	r.Nats.Publish("rooms.create", []byte(data))
 	return err
 }
 
@@ -121,6 +126,8 @@ func (r *RoomData) GetRoomInfoByID(roomID uuid.UUID) (*RoomInfo, error) {
 
 func (r *RoomData) AddUserToUser(roomUser RoomUser) error {
 	_, err := r.DB.Model(&roomUser).Insert()
+	data, _ := json.Marshal(roomUser)
+	r.Nats.Publish(fmt.Sprintf("rooms.%v.users.new", &roomUser.RoomID), []byte(data))
 	return err
 }
 

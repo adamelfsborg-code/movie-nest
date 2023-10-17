@@ -41,8 +41,9 @@ func (a *Server) loadRoutes() {
 func (a *Server) loadUserRoutes(router chi.Router) {
 	userHandler := &handlers.UserHandler{
 		Data: data.UserData{
-			Env: a.config,
-			DB:  a.datbase,
+			Env:  a.config,
+			DB:   a.datbase,
+			Nats: a.nats,
 		},
 	}
 
@@ -61,7 +62,8 @@ func (a *Server) loadUserRoutes(router chi.Router) {
 func (a *Server) loadRoomRoutes(router chi.Router) {
 	roomHandler := &handlers.RoomHandler{
 		Data: data.RoomData{
-			DB: a.datbase,
+			DB:   a.datbase,
+			Nats: a.nats,
 		},
 	}
 
@@ -80,8 +82,9 @@ func (a *Server) loadRoomRoutes(router chi.Router) {
 func (a *Server) loadMovieRoutes(router chi.Router) {
 	movieHandler := &handlers.MovieHandler{
 		Data: data.MovieData{
-			Env: a.config,
-			DB:  a.datbase,
+			Env:  a.config,
+			DB:   a.datbase,
+			Nats: a.nats,
 		},
 	}
 
@@ -95,8 +98,9 @@ func (a *Server) loadMovieRoutes(router chi.Router) {
 func (a *Server) loadShelfRoutes(router chi.Router) {
 	shelfHandler := &handlers.ShelfHandler{
 		Data: data.ShelfData{
-			Env: a.config,
-			DB:  a.datbase,
+			Env:  a.config,
+			DB:   a.datbase,
+			Nats: a.nats,
 		},
 	}
 
