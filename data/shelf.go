@@ -2,6 +2,7 @@ package data
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/adamelfsborg-code/movie-nest/config"
@@ -40,7 +41,7 @@ func NewShelf(name string, roomID uuid.UUID) *Shelf {
 func (s *ShelfData) CreateShelf(shelf Shelf) error {
 	_, err := s.DB.Model(&shelf).Insert()
 	data, _ := json.Marshal(shelf)
-	s.Nats.Publish("shelves.create", []byte(data))
+	s.Nats.Publish(fmt.Sprintf("rooms.%v.shelves.create", &shelf.RoomID), []byte(data))
 	return err
 }
 
