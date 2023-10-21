@@ -39,6 +39,9 @@ func (a *Server) loadRoutes() {
 }
 
 func (a *Server) loadUserRoutes(router chi.Router) {
+	roomData := data.RoomData{
+		DB: a.datbase,
+	}
 	userHandler := &handlers.UserHandler{
 		Data: data.UserData{
 			Env:  a.config,
@@ -52,7 +55,11 @@ func (a *Server) loadUserRoutes(router chi.Router) {
 		r.Get("/", userHandler.SelectUsers)
 		r.Get("/user", userHandler.GetUserInfoByID)
 		r.Get("/access", userHandler.HandleUserAccess)
-		r.Get("/rooms/{room_id}", userHandler.GetUsersInRoom)
+
+		r.Group(func(r chi.Router) {
+			r.Use(CustomAccessRoomMiddleware(roomData))
+			r.Get("/rooms/{room_id}", userHandler.GetUsersInRoom)
+		})
 	})
 
 	router.Post("/register", userHandler.Register)
@@ -60,23 +67,35 @@ func (a *Server) loadUserRoutes(router chi.Router) {
 }
 
 func (a *Server) loadRoomRoutes(router chi.Router) {
+	data := data.RoomData{
+		DB:   a.datbase,
+		Nats: a.nats,
+	}
 	roomHandler := &handlers.RoomHandler{
-		Data: data.RoomData{
-			DB:   a.datbase,
-			Nats: a.nats,
-		},
+		Data: data,
 	}
 
 	router.Get("/", roomHandler.SelectRooms)
-	router.Get("/{room_id}", roomHandler.GetRoomByID)
-	router.Get("/{room_id}/info", roomHandler.GetRoomInfoByID)
-	router.Get("/{room_id}/available-users", roomHandler.GetAvailableUsers)
+
+	router.Group(func(r chi.Router) {
+		r.Use(CustomAccessRoomMiddleware(data))
+		r.Get("/{room_id}", roomHandler.GetRoomByID)
+		r.Get("/{room_id}/info", roomHandler.GetRoomInfoByID)
+		r.Get("/{room_id}/access", roomHandler.GetRoomAccess)
+		r.Get("/{room_id}/available-users", roomHandler.GetAvailableUsers)
+		r.Get("/withusers/{room_id}", roomHandler.GetRoomWithUsersByID)
+
+		r.Get("/{room_id}/access-allowed", func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+		})
+	})
+
 	router.Get("/withusers", roomHandler.ListRoomsWithUsers)
-	router.Get("/withusers/{room_id}", roomHandler.GetRoomWithUsersByID)
 	router.Get("/users", roomHandler.GetUserRoomsByID)
 
 	router.Post("/", roomHandler.CreateRoom)
 	router.Post("/users", roomHandler.AddUserToRoom)
+
 }
 
 func (a *Server) loadMovieRoutes(router chi.Router) {
@@ -96,18 +115,31 @@ func (a *Server) loadMovieRoutes(router chi.Router) {
 }
 
 func (a *Server) loadShelfRoutes(router chi.Router) {
-	shelfHandler := &handlers.ShelfHandler{
-		Data: data.ShelfData{
-			Env:  a.config,
-			DB:   a.datbase,
-			Nats: a.nats,
-		},
+	shelfData := data.ShelfData{
+		Env:  a.config,
+		DB:   a.datbase,
+		Nats: a.nats,
 	}
 
-	router.Get("/{shelf_id}/movies", shelfHandler.GetShelfMoviesByID)
-	router.Get("/rooms/{room_id}", shelfHandler.GetShelvesByRoomID)
-	router.Get("/{shelf_id}/info", shelfHandler.GetShelfInfoByID)
-	router.Get("/{shelf_id}/available-movies", shelfHandler.GetAvailableMovies)
+	roomData := data.RoomData{
+		DB: a.datbase,
+	}
+
+	shelfHandler := &handlers.ShelfHandler{
+		Data: shelfData,
+	}
+
+	router.Group(func(r chi.Router) {
+		r.Use(CustomAccessShelfMiddleware(shelfData))
+		r.Get("/{shelf_id}/movies", shelfHandler.GetShelfMoviesByID)
+		r.Get("/{shelf_id}/info", shelfHandler.GetShelfInfoByID)
+		r.Get("/{shelf_id}/available-movies", shelfHandler.GetAvailableMovies)
+	})
+
+	router.Group(func(r chi.Router) {
+		r.Use(CustomAccessRoomMiddleware(roomData))
+		r.Get("/rooms/{room_id}", shelfHandler.GetShelvesByRoomID)
+	})
 
 	router.Post("/", shelfHandler.CreateShelf)
 }
