@@ -70,7 +70,6 @@ func (u *UserData) List() []User {
 func (u *UserData) Login(name, password string) (string, error) {
 	user := u.getUserByName(name)
 
-	fmt.Println(password, user)
 	valid := shared.CheckPasswordHash(password, user.Password)
 	if valid == false {
 		return "", fmt.Errorf("User does not exists")
