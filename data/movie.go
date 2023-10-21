@@ -2,6 +2,7 @@ package data
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/adamelfsborg-code/movie-nest/config"
@@ -58,8 +59,8 @@ func NewMovie(movieID uint, shelfID uuid.UUID) *Movie {
 
 func (m *MovieData) CreateMovie(movie Movie) error {
 	_, err := m.DB.Model(&movie).Insert()
-	data, _ := json.Marshal(movie)
-	m.Nats.Publish("movies.create", []byte(data))
+	data, _ := json.Marshal(&movie)
+	m.Nats.Publish(fmt.Sprintf("shelves.%v.movies.new", &movie.ShelfID), []byte(data))
 	return err
 }
 
@@ -125,7 +126,7 @@ func (m *MovieData) GetMovieDetails(movieID uuid.UUID) (*MovieDetails, error) {
 
 func (m *MovieData) RateMovie(rating MovieRating) error {
 	_, err := m.DB.Model(&rating).Insert()
-	data, _ := json.Marshal(rating)
-	m.Nats.Publish("movies.rate", []byte(data))
+	data, _ := json.Marshal(&rating)
+	m.Nats.Publish(fmt.Sprintf("movies.%v.rated", &rating.MovieID), []byte(data))
 	return err
 }
