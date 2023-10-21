@@ -24,7 +24,7 @@ func (m *MovieHandler) CreateMovie(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&body)
 	if err != nil {
 		fmt.Println("Failed to decode json: ", err)
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, "Failed to decode json", http.StatusBadRequest)
 		return
 	}
 
@@ -32,11 +32,20 @@ func (m *MovieHandler) CreateMovie(w http.ResponseWriter, r *http.Request) {
 	err = m.Data.CreateMovie(*movie)
 	if err != nil {
 		fmt.Println("Failed to create movie: ", err)
-		w.WriteHeader(http.StatusInternalServerError)
+		http.Error(w, "Failed to create movie", http.StatusInternalServerError)
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	jsonBytes, err := json.Marshal(map[string]string{"message": "Movie created"})
+	if err != nil {
+		fmt.Println("Failed to decode json: ", err)
+		http.Error(w, "Failed to decode json", http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Add("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	w.Write(jsonBytes)
 }
 
 func (m *MovieHandler) GetMovie(w http.ResponseWriter, r *http.Request) {
@@ -45,22 +54,23 @@ func (m *MovieHandler) GetMovie(w http.ResponseWriter, r *http.Request) {
 	movieID, err := strconv.ParseUint(idParam, 10, 64)
 	if err != nil {
 		fmt.Println("Failed to convert param to uint: ", err)
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, "Failed to convert param to uint", http.StatusBadRequest)
 		return
 	}
 
 	movie, err := m.Data.GetMovie(uint(movieID))
 	if err != nil {
 		fmt.Println("Failed to get movie: ", err)
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, "Failed to get movie", http.StatusBadRequest)
 		return
 	}
 
 	jsonBytes, err := json.Marshal(movie)
 	if err != nil {
 		fmt.Println("Failed to decode json: ", err)
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, "Failed to decode json", http.StatusBadRequest)
 		return
+
 	}
 
 	w.Header().Add("Content-Type", "application/json")
@@ -74,21 +84,22 @@ func (m *MovieHandler) GetMovieDetails(w http.ResponseWriter, r *http.Request) {
 	movieID, err := uuid.Parse(idParam)
 	if err != nil {
 		fmt.Println("Failed to parse id: ", err)
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, "Failed to parse id", http.StatusBadRequest)
 		return
+
 	}
 
 	movie, err := m.Data.GetMovieDetails(movieID)
 	if err != nil {
 		fmt.Println("Failed to get movie: ", err)
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, "Failed to get movie", http.StatusInternalServerError)
 		return
 	}
 
 	jsonBytes, err := json.Marshal(movie)
 	if err != nil {
 		fmt.Println("Failed to decode json: ", err)
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, "Failed to decode json", http.StatusBadRequest)
 		return
 	}
 
@@ -104,7 +115,7 @@ func (m *MovieHandler) RateMovie(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&body)
 	if err != nil {
 		fmt.Println("Failed to decode json: ", err)
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, "Failed to decode json", http.StatusBadRequest)
 		return
 	}
 
@@ -113,8 +124,9 @@ func (m *MovieHandler) RateMovie(w http.ResponseWriter, r *http.Request) {
 	movieID, err := uuid.Parse(idParam)
 	if err != nil {
 		fmt.Println("Failed to parse id: ", err)
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, "Failed to parse id", http.StatusBadRequest)
 		return
+
 	}
 
 	idParam = r.Header.Get("X-UserID")
@@ -122,7 +134,7 @@ func (m *MovieHandler) RateMovie(w http.ResponseWriter, r *http.Request) {
 	userID, err := uuid.Parse(idParam)
 	if err != nil {
 		fmt.Println("Failed to parse id: ", err)
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, "Failed to parse id", http.StatusBadRequest)
 		return
 	}
 
@@ -134,11 +146,20 @@ func (m *MovieHandler) RateMovie(w http.ResponseWriter, r *http.Request) {
 
 	err = m.Data.RateMovie(*movieRating)
 	if err != nil {
-		fmt.Println("Failed to search movies: ", err)
-		w.WriteHeader(http.StatusBadRequest)
+		fmt.Println("Failed to rate movie: ", err)
+		http.Error(w, "Failed to rate movie", http.StatusInternalServerError)
+		return
+
+	}
+
+	jsonBytes, err := json.Marshal(map[string]string{"message": "Movie rated"})
+	if err != nil {
+		fmt.Println("Failed to decode json: ", err)
+		http.Error(w, "Failed to decode json", http.StatusBadRequest)
 		return
 	}
 
 	w.Header().Add("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusCreated)
+	w.Write(jsonBytes)
 }

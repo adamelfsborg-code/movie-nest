@@ -21,7 +21,7 @@ func (u *UserHandler) SelectUsers(w http.ResponseWriter, r *http.Request) {
 	jsonBytes, err := json.Marshal(users)
 	if err != nil {
 		fmt.Println("Failed to decode json: ", err)
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, "Failed to decode json", http.StatusBadRequest)
 		return
 	}
 
@@ -39,24 +39,34 @@ func (u *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&body)
 	if err != nil {
 		fmt.Println("Failed to decode json: ", err)
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, "Failed to decode json", http.StatusBadRequest)
 		return
 	}
 
 	user, err := data.NewRegisterUser(body.Name, body.Password)
 	if err != nil {
 		fmt.Println("Failed to create user: ", err)
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, "Failed to create user", http.StatusBadRequest)
 		return
 	}
 
 	err = u.Data.Register(*user)
 	if err != nil {
 		fmt.Println("Failed to create user: ", err)
-		w.WriteHeader(http.StatusInternalServerError)
+		http.Error(w, "Failed to create user", http.StatusInternalServerError)
 		return
 	}
+
+	jsonBytes, err := json.Marshal(map[string]string{"message": "Registerd"})
+	if err != nil {
+		fmt.Println("Failed to decode json: ", err)
+		http.Error(w, "Failed to decode json", http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
+	w.Write(jsonBytes)
 }
 
 func (u *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
@@ -68,20 +78,21 @@ func (u *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&body)
 	if err != nil {
 		fmt.Println("Failed to decode json: ", err)
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, "Failed to decode json", http.StatusBadRequest)
 		return
 	}
 
 	token, err := u.Data.Login(body.Name, body.Password)
 	if err != nil {
 		fmt.Println("Failed to login user: ", err)
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, "Failed to login user", http.StatusBadRequest)
 		return
 	}
 
 	response := map[string]string{"token": token}
 	jsonResponse, err := json.Marshal(response)
 	if err != nil {
+		fmt.Println("Failed to encode token: ", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
@@ -97,19 +108,20 @@ func (u *UserHandler) GetUserInfoByID(w http.ResponseWriter, r *http.Request) {
 	userID, err := uuid.Parse(idParam)
 	if err != nil {
 		fmt.Println("Failed to parse id: ", err)
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, "Failed to parse id", http.StatusBadRequest)
 		return
 	}
 
 	user := u.Data.GetUserInfoByID(userID)
 	if err != nil {
 		fmt.Println("Failed to login user: ", err)
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, "Failed to login user", http.StatusBadRequest)
 		return
 	}
 
 	jsonResponse, err := json.Marshal(user)
 	if err != nil {
+		fmt.Println("Failed to encode user: ", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
@@ -125,18 +137,27 @@ func (u *UserHandler) HandleUserAccess(w http.ResponseWriter, r *http.Request) {
 	userID, err := uuid.Parse(idParam)
 	if err != nil {
 		fmt.Println("Failed to parse id: ", err)
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, "Failed to parse id", http.StatusBadRequest)
 		return
 	}
 	exists := u.Data.CheckUserExistsByID(userID)
 
 	if !exists {
 		fmt.Println("User not found")
-		w.WriteHeader(http.StatusNotFound)
+		http.Error(w, "User not found", http.StatusNotFound)
 		return
 	}
 
+	jsonBytes, err := json.Marshal(map[string]string{"message": "Access Allowed"})
+	if err != nil {
+		fmt.Println("Failed to decode json: ", err)
+		http.Error(w, "Failed to decode json", http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
+	w.Write(jsonBytes)
 }
 
 func (u *UserHandler) GetUsersInRoom(w http.ResponseWriter, r *http.Request) {
@@ -146,6 +167,7 @@ func (u *UserHandler) GetUsersInRoom(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		fmt.Println("Failed to parse id: ", err)
 		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, "Failed to parse id", http.StatusBadRequest)
 		return
 	}
 
@@ -154,7 +176,7 @@ func (u *UserHandler) GetUsersInRoom(w http.ResponseWriter, r *http.Request) {
 	userID, err := uuid.Parse(idParam)
 	if err != nil {
 		fmt.Println("Failed to parse id: ", err)
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, "Failed to parse id", http.StatusBadRequest)
 		return
 	}
 
@@ -172,7 +194,7 @@ func (u *UserHandler) GetUsersInRoom(w http.ResponseWriter, r *http.Request) {
 	jsonBytes, err := json.Marshal(users)
 	if err != nil {
 		fmt.Println("Failed to decode json: ", err)
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, "Failed to decode json", http.StatusBadRequest)
 		return
 	}
 

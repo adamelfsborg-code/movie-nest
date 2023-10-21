@@ -24,7 +24,7 @@ func (s *ShelfHandler) CreateShelf(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&body)
 	if err != nil {
 		fmt.Println("Failed to decode json: ", err)
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, "Failed to decode json", http.StatusBadRequest)
 		return
 	}
 
@@ -32,11 +32,20 @@ func (s *ShelfHandler) CreateShelf(w http.ResponseWriter, r *http.Request) {
 	err = s.Data.CreateShelf(*shelf)
 	if err != nil {
 		fmt.Println("Failed to create shelf: ", err)
-		w.WriteHeader(http.StatusInternalServerError)
+		http.Error(w, "Failed to create shelf", http.StatusInternalServerError)
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	jsonBytes, err := json.Marshal(map[string]string{"message": "Shelf created"})
+	if err != nil {
+		fmt.Println("Failed to decode json: ", err)
+		http.Error(w, "Failed to decode json", http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Add("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	w.Write(jsonBytes)
 }
 
 func (s *ShelfHandler) GetShelvesByRoomID(w http.ResponseWriter, r *http.Request) {
@@ -45,21 +54,21 @@ func (s *ShelfHandler) GetShelvesByRoomID(w http.ResponseWriter, r *http.Request
 	roomID, err := uuid.Parse(idParam)
 	if err != nil {
 		fmt.Println("Failed to parse id: ", err)
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, "Failed to parse id", http.StatusBadRequest)
 		return
 	}
 
 	shelf := s.Data.GetShelvesByRoomID(roomID)
 	if err != nil {
-		fmt.Println("Failed to create shelf: ", err)
-		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Println("Failed to get shelf: ", err)
+		http.Error(w, "Failed to get shelf", http.StatusInternalServerError)
 		return
 	}
 
 	jsonBytes, err := json.Marshal(shelf)
 	if err != nil {
 		fmt.Println("Failed to decode json: ", err)
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, "Failed to decode json", http.StatusBadRequest)
 		return
 	}
 
@@ -74,21 +83,22 @@ func (s *ShelfHandler) GetShelfMoviesByID(w http.ResponseWriter, r *http.Request
 	shelfID, err := uuid.Parse(idParam)
 	if err != nil {
 		fmt.Println("Failed to parse id: ", err)
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, "Failed to parse id", http.StatusBadRequest)
 		return
 	}
 
 	shelf := s.Data.GetShelfMoviesByID(shelfID)
 	if err != nil {
-		fmt.Println("Failed to create shelf: ", err)
-		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Println("Failed to get shelf: ", err)
+		http.Error(w, "Failed to get shelf", http.StatusInternalServerError)
 		return
+
 	}
 
 	jsonBytes, err := json.Marshal(shelf)
 	if err != nil {
 		fmt.Println("Failed to decode json: ", err)
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, "Failed to decode json", http.StatusBadRequest)
 		return
 	}
 
@@ -103,21 +113,21 @@ func (s *ShelfHandler) GetShelfInfoByID(w http.ResponseWriter, r *http.Request) 
 	shelfID, err := uuid.Parse(idParam)
 	if err != nil {
 		fmt.Println("Failed to parse id: ", err)
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, "Failed to parse id", http.StatusBadRequest)
 		return
 	}
 
 	shelf := s.Data.GetShelfInfoByID(shelfID)
 	if err != nil {
-		fmt.Println("Failed to create shelf: ", err)
-		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Println("Failed to get shelf: ", err)
+		http.Error(w, "Failed to get shelf", http.StatusInternalServerError)
 		return
 	}
 
 	jsonBytes, err := json.Marshal(shelf)
 	if err != nil {
 		fmt.Println("Failed to decode json: ", err)
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, "Failed to decode json", http.StatusBadRequest)
 		return
 	}
 
@@ -132,7 +142,7 @@ func (s *ShelfHandler) GetAvailableMovies(w http.ResponseWriter, r *http.Request
 	shelfID, err := uuid.Parse(idParam)
 	if err != nil {
 		fmt.Println("Failed to parse id: ", err)
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, "Failed to parse id", http.StatusBadRequest)
 		return
 	}
 
@@ -149,14 +159,14 @@ func (s *ShelfHandler) GetAvailableMovies(w http.ResponseWriter, r *http.Request
 	availableMovies, err := s.Data.GetAvailableMovies(shelfID, searchTerm, excludeExisting)
 	if err != nil {
 		fmt.Println("Failed to search movies: ", err)
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, "Failed to search movies", http.StatusBadRequest)
 		return
 	}
 
 	jsonBytes, err := json.Marshal(availableMovies)
 	if err != nil {
 		fmt.Println("Failed to decode json: ", err)
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, "Failed to decode json", http.StatusBadRequest)
 		return
 	}
 
