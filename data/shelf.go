@@ -97,3 +97,24 @@ func (s *ShelfData) GetAvailableMovies(shelfID uuid.UUID, searchTerm string, exc
 
 	return movies, nil
 }
+
+func (s *ShelfData) GetShelfAccess(shelfID, userID uuid.UUID) (bool, error) {
+	var room Room
+
+	query := s.DB.Model(&room).
+		Join(`JOIN room_users ru ON "room".id = "ru".room_id`).
+		Join(`JOIN shelves s ON "s".room_id = "ru".room_id`).
+		Where(`"s".id = ? AND "ru".user_id = ?`, &shelfID, &userID).
+		Select()
+
+	if query == pg.ErrNoRows {
+		return false, nil
+	}
+
+	if query != nil {
+		return false, nil
+	}
+
+	return true, nil
+
+}
